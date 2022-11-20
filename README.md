@@ -9,3 +9,7 @@ Finds unused properties in TypeScript code
 ```sh
 npx no-unused
 ```
+
+## Eslint plugin
+
+See [eslint-plugin-no-unused](https://www.npmjs.com/package/eslint-plugin-no-unused)
