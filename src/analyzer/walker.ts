@@ -199,7 +199,6 @@ export const walk = (node?: ts.Node) => {
     see(node);
     walk(node.initializer);
   } else if (_.isShorthandPropertyAssignment(node)) {
-    debugger;
     const originalSymbol = tc().getShorthandAssignmentValueSymbol(node);
     use(originalSymbol);
     see(node);

@@ -16,8 +16,7 @@ const createProgram = () => {
         ) || [];
 
   if (entrypoints.length === 0) {
-    console.log('Missing entrypoints, add `files` in tsconfg.json or pass files as arguments');
-    process.exit(1);
+    throw new Error('Missing entrypoints, add `files` in tsconfg.json or pass files as arguments');
   }
 
   const program = ts.createProgram({
