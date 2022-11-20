@@ -1,0 +1,181 @@
+### nodes
+- [ ] AccessorDeclaration
+- [x] ArrayBindingPattern
+- [x] ArrayLiteralExpression
+- [ ] ArrayTypeNode
+- [x] ArrowFunction
+- [ ] AsExpression
+- [ ] AssertionExpression
+- [ ] AwaitExpression
+- [ ] BinaryExpression
+- [ ] BindingElement
+- [ ] BindingPattern
+- [ ] Block
+- [ ] BlockLike
+- [ ] BooleanLiteral
+- [ ] BreakOrContinueStatement
+- [ ] BreakStatement
+- [ ] CallExpression
+- [ ] CallLikeExpression
+- [ ] CallSignatureDeclaration
+- [ ] CaseBlock
+- [ ] CaseClause
+- [ ] CaseOrDefaultClause
+- [ ] CatchClause
+- [x] ClassDeclaration
+- [x] ClassExpression
+- [x] ClassLikeDeclaration
+- [ ] CommaListExpression
+- [ ] ConditionalExpression
+- [ ] ConditionalTypeNode
+- [ ] ConstructorDeclaration
+- [ ] ConstructorTypeNode
+- [ ] ConstructSignatureDeclaration
+- [ ] ContinueStatement
+- [ ] ComputedPropertyName
+- [ ] DebuggerStatement
+- [ ] Decorator
+- [ ] DefaultClause
+- [ ] DeleteExpression
+- [ ] DoStatement
+- [ ] ElementAccessExpression
+- [ ] EmptyStatement
+- [ ] EntityName
+- [ ] EntityNameExpression
+- [x] EnumDeclaration
+- [x] EnumMember
+- [ ] ExportAssignment
+- [ ] ExportDeclaration
+- [ ] ExportSpecifier
+- [ ] Expression
+- [ ] ExpressionStatement
+- [ ] ExpressionWithTypeArguments
+- [ ] ExternalModuleReference
+- [ ] ForInStatement
+- [ ] ForInOrOfStatement
+- [ ] ForOfStatement
+- [ ] ForStatement
+- [x] FunctionDeclaration
+- [x] FunctionExpression
+- [ ] FunctionTypeNode
+- [ ] GetAccessorDeclaration
+- [ ] Identifier
+- [ ] IfStatement
+- [ ] ImportClause
+- [ ] ImportDeclaration
+- [ ] ImportEqualsDeclaration
+- [ ] ImportSpecifier
+- [ ] IndexedAccessTypeNode
+- [ ] IndexSignatureDeclaration
+- [ ] InferTypeNode
+- [ ] InterfaceDeclaration
+- [ ] IntersectionTypeNode
+- [ ] IterationStatement
+- [ ] JsDoc
+- [ ] JsxAttribute
+- [ ] JsxAttributeLike
+- [ ] JsxAttributes
+- [ ] JsxClosingElement
+- [ ] JsxClosingFragment
+- [ ] JsxElement
+- [ ] JsxExpression
+- [ ] JsxFragment
+- [ ] JsxOpeningElement
+- [ ] JsxOpeningFragment
+- [ ] JsxOpeningLikeElement
+- [ ] JsxSelfClosingElement
+- [ ] JsxSpreadAttribute
+- [ ] JsxText
+- [ ] LabeledStatement
+- [ ] LiteralExpression
+- [ ] LiteralTypeNode
+- [ ] MappedTypeNode
+- [ ] MetaProperty
+- [ ] MethodDeclaration
+- [ ] MethodSignature
+- [ ] ModuleBlock
+- [ ] ModuleDeclaration
+- [ ] NamedExports
+- [ ] NamedImports
+- [ ] NamespaceDeclaration
+- [ ] NamespaceImport
+- [ ] NamespaceExportDeclaration
+- [ ] NewExpression
+- [ ] NonNullExpression
+- [ ] NoSubstitutionTemplateLiteral
+- [ ] NullLiteral
+- [ ] NumericLiteral
+- [ ] NumericOrStringLikeLiteral
+- [x] ObjectBindingPattern
+- [ ] ObjectLiteralExpression
+- [ ] OmittedExpression
+- [ ] ParameterDeclaration
+- [ ] ParenthesizedExpression
+- [ ] ParenthesizedTypeNode
+- [ ] PostfixUnaryExpression
+- [ ] PrefixUnaryExpression
+- [ ] PropertyAccessExpression
+- [ ] PropertyAssignment
+- [ ] PropertyDeclaration
+- [ ] PropertySignature
+- [ ] QualifiedName
+- [ ] RegularExpressionLiteral
+- [ ] ReturnStatement
+- [ ] SetAccessorDeclaration
+- [ ] ShorthandPropertyAssignment
+- [ ] SignatureDeclaration
+- [ ] SourceFile
+- [ ] SpreadAssignment
+- [ ] SpreadElement
+- [ ] StringLiteral
+- [ ] SwitchStatement
+- [ ] SyntaxList
+- [ ] TaggedTemplateExpression
+- [ ] TemplateExpression
+- [ ] TemplateLiteral
+- [ ] TextualLiteral
+- [ ] ThrowStatement
+- [ ] TryStatement
+- [ ] TupleTypeNode
+- [ ] TypeAliasDeclaration
+- [ ] TypeAssertion
+- [ ] TypeLiteralNode
+- [ ] TypeOfExpression
+- [ ] TypeOperatorNode
+- [ ] TypeParameterDeclaration
+- [ ] TypePredicateNode
+- [ ] TypeReferenceNode
+- [ ] TypeQueryNode
+- [ ] UnionTypeNode
+- [ ] VariableDeclaration
+- [ ] VariableStatement
+- [ ] VariableDeclarationList
+- [ ] VoidExpression
+- [ ] WhileStatement
+- [ ] WithStatement
+- [ ] ImportTypeNode
+- [ ] OptionalTypeNode
+- [ ] RestTypeNode
+- [ ] SyntheticExpression
+- [ ] BigIntLiteral
+
+### types
+- [x] ConditionalType
+- [x] EnumType
+- [x] GenericType
+- [ ] IndexedAccessType
+- [ ] IndexedAccessype
+- [ ] InstantiableType
+- [x] InterfaceType
+- [x] IntersectionType
+- [ ] LiteralType
+- [x] ObjectType
+- [ ] SubstitutionType
+- [ ] TypeParameter
+- [ ] TypeReference
+- [ ] TypeVariable
+- [x] UnionOrIntersectionType
+- [x] UnionType
+- [ ] UniqueESSymbolType
+- [x] TupleType
+- [x] TupleTypeReference
