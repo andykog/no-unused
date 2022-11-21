@@ -3,25 +3,23 @@
 import * as ts from 'typescript';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as glob from 'glob';
 import {analyze} from '../analyzer';
+import {resolveTsConfig} from './tsConfigResolver';
 
 const createProgram = () => {
-  const tsConfigPath = path.resolve('tsconfig.json');
-  const tsConfigJSON = JSON.parse(fs.readFileSync(tsConfigPath, 'utf-8'));
-  const entrypoints: string[] =
-    process.argv.length > 2
-      ? process.argv.slice(2)
-      : tsConfigJSON?.files?.map((file: string) =>
-          path.resolve(path.dirname(tsConfigPath), file),
-        ) || [];
+  const {compilerOptions, files} = resolveTsConfig();
+  const params = process.argv.slice(2);
+  const providedFiles = params.length ? params.flatMap((f) => glob.sync(f)) : undefined;
+  const entrypoints = providedFiles ?? files;
 
   if (entrypoints.length === 0) {
-    throw new Error('Missing entrypoints, add `files` in tsconfg.json or pass files as arguments');
+    throw new Error('Missing entrypoints, add files in tsconfg.json or pass them as arguments');
   }
 
   const program = ts.createProgram({
     rootNames: entrypoints,
-    options: require(tsConfigPath).compilerOptions ?? {},
+    options: compilerOptions,
   });
 
   if (!process.env.NO_TSC_ERRORS) {

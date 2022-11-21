@@ -10,6 +10,11 @@ Finds unused properties in TypeScript code
 npx no-unused
 ```
 
+Or provide files explicitly:
+```sh
+npx no-unused src/**/*.ts
+```
+
 ## Eslint plugin
 
 See [eslint-plugin-no-unused](https://www.npmjs.com/package/eslint-plugin-no-unused)

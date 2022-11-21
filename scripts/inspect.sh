@@ -2,7 +2,7 @@
 
 if [ -z "$@" ]
 then
-  echo "Error: missing arguments, try ./scripts/eslint.sh specs/arrowFunction.ts"
+  echo "Error: missing arguments, try ./scripts/eslint.sh syntax/arrowFunction.ts"
   exit 1;
 fi
 
