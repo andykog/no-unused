@@ -38,7 +38,9 @@ const convertTarget = (target?: string) => {
   }
 };
 
-const convert = (compilerOpts: getTsconfig.TsConfigJson.CompilerOptions = {}): ts.CompilerOptions => ({
+const convert = (
+  compilerOpts: getTsconfig.TsConfigJson.CompilerOptions = {},
+): ts.CompilerOptions => ({
   ...compilerOpts,
   lib: compilerOpts.lib?.map(convertLibs),
   types: compilerOpts.types?.map(convertType),

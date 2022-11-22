@@ -7,13 +7,9 @@ Finds unused properties in TypeScript code
 ## Usage
 
 ```sh
-npx no-unused
-```
-
-Or provide files explicitly:
-```sh
 npx no-unused src/**/*.ts
 ```
+
 
 ## Eslint plugin
 

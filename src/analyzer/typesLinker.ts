@@ -1,4 +1,4 @@
-import * as ts from 'typescript';
+import ts from 'typescript';
 import * as _ from 'tsutils';
 import {tc, use, see} from './state';
 

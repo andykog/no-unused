@@ -1,17 +1,20 @@
 {
-  "root": true,
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "project": "./tsconfig.json",
-    "ecmaVersion": 6,
-    "sourceType": "module",
-    "ecmaFeatures": {
-      "modules": true
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": "./tests/tsconfig.json",
+        "ecmaVersion": 6,
+        "sourceType": "module",
+        "ecmaFeatures": {
+          "modules": true
+        }
+      },
+      "plugins": ["no-unused"],
+      "rules": {
+        "prettier/prettier": "off",
+        "no-unused/no-unused": "warn"
+      }
     }
-  },
-  "plugins": ["no-unused"],
-  "rules": {
-    "no-sparse-arrays": 1,
-    "no-unused/no-unused": 1
-  }
+  ]
 }

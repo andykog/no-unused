@@ -15,6 +15,6 @@ type Return = {
 };
 function selector(props: SelectorParams): Return {
   return false || props.a
-};
+}
 
 selector(data()).aa;

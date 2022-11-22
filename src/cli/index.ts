@@ -1,8 +1,4 @@
-#!/usr/bin/env node
-
 import * as ts from 'typescript';
-import * as path from 'path';
-import * as fs from 'fs';
 import * as glob from 'glob';
 import {analyze} from '../analyzer';
 import {resolveTsConfig} from './tsConfigResolver';
