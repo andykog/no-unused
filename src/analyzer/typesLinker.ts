@@ -152,6 +152,7 @@ export const linkTypes = (
           souceParams.forEach((sourcePType, i) => {
             const targetPType = targetParams[i];
             if (targetPType === sourcePType) {
+              findEachSymbolInType(targetPType, location, (s) => use(s));
               return;
             }
             // Parameters are in contravariant position, so source & target are flipped
