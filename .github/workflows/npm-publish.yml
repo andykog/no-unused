@@ -1,0 +1,30 @@
+name: Node.js Package
+
+on:
+  push:
+    branches:
+      - 'main'
+
+jobs:
+  publish-npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          registry-url: https://registry.npmjs.org/
+      - name: Resolve new package version
+        run: |
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          export LATESTS=$(npm show "$NAME@$VERSION" version --json)
+          LATEST=$(node -p "JSON.parse(process.env.LATESTS).at(-1)")
+          NEXT=$(echo $LATEST | awk -F. '/[0-9]+\./{$NF++;print}' OFS=.)
+          npm version $NEXT --git-tag-version false
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+      - run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.npm_token}}

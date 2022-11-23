@@ -1,6 +1,6 @@
 {
   "name": "no-unused",
-  "version": "0.0.5",
+  "version": "0.0.x",
   "description": "Finds unused properties in TypeScript code",
   "keywords": [
     "typescript"
