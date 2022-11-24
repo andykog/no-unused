@@ -11,7 +11,7 @@ import {
   use,
   see,
 } from './state';
-import {extractIdentifiersFromType, linkTypes} from './typesLinker';
+import {extractIdentifiersFromType, linkTypes, findEachSymbolInType} from './typesLinker';
 
 const getClassType = (node: ts.ClassLikeDeclaration) => {
   const type = tc().getTypeAtLocation(node);
@@ -80,6 +80,12 @@ export const walk = (node?: ts.Node) => {
         usedIdentifiers.add(i);
       }
     });
+  }
+
+  if (ts.getJSDocTags(node).some(({tagName}) => tagName.escapedText === 'public')) {
+    use(node);
+    const type = tc().getTypeAtLocation(node);
+    findEachSymbolInType(type, node, use);
   }
 
   if (_.isObjectLiteralExpression(node)) {

@@ -81,7 +81,11 @@ const findEachNestedType = (
   });
 };
 
-const findEachSymbolInType = (type: ts.Type, location: ts.Node, cb: (s: ts.Symbol) => void) => {
+export const findEachSymbolInType = (
+  type: ts.Type,
+  location: ts.Node,
+  cb: (s: ts.Symbol) => void,
+) => {
   findEachNestedType(type, location, (t, s) => {
     const symbol = s ?? t.symbol;
     if (symbol) cb(symbol);
