@@ -1,8 +1,13 @@
 import * as ts from 'typescript';
 import {seenIdentifiers, usedIdentifiers, setTypeChecker} from './state';
 import {walk} from './walker';
+import minimatch from 'minimatch';
 
-export const analyze = (program: ts.Program) => {
+type Options = {
+  ignoredFilesPattern?: string;
+};
+
+export const analyze = (program: ts.Program, options: Options = {}) => {
   seenIdentifiers.clear();
   setTypeChecker(program.getTypeChecker());
 
@@ -10,6 +15,9 @@ export const analyze = (program: ts.Program) => {
     .getSourceFiles()
     .filter(
       (f) => !program.isSourceFileFromExternalLibrary(f) && !program.isSourceFileDefaultLibrary(f),
+    )
+    .filter(
+      (f) => !options.ignoredFilesPattern || !minimatch(f.fileName, options.ignoredFilesPattern),
     )
     .forEach(walk);
 

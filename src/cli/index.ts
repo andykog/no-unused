@@ -3,6 +3,8 @@ import * as glob from 'glob';
 import {analyze} from '../analyzer';
 import {resolveTsConfig} from './tsConfigResolver';
 
+const ignoredFilesPattern = '**/*.@(spec|test).*';
+
 const createProgram = () => {
   const {compilerOptions, files} = resolveTsConfig();
   const params = process.argv.slice(2);
@@ -31,7 +33,7 @@ const createProgram = () => {
   return program;
 };
 
-const {seenIdentifiers, usedIdentifiers} = analyze(createProgram());
+const {seenIdentifiers, usedIdentifiers} = analyze(createProgram(), {ignoredFilesPattern});
 
 const unusedIdentifiers = Array.from(seenIdentifiers).filter((i) => !usedIdentifiers.has(i));
 let diagnostics: ts.DiagnosticWithLocation[] = unusedIdentifiers.map((identifier) => ({
