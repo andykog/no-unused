@@ -20,6 +20,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "commander": "^9.4.1",
     "get-tsconfig": "^4.2.0",
     "glob": "^8.0.3",
     "minimatch": "^5.1.0",

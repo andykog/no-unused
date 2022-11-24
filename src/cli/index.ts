@@ -2,54 +2,76 @@ import * as ts from 'typescript';
 import * as glob from 'glob';
 import {analyze} from '../analyzer';
 import {resolveTsConfig} from './tsConfigResolver';
+import {Command} from 'commander';
+const packageJson = require('../../package.json');
 
-const ignoredFilesPattern = '**/*.@(spec|test).*';
+const command = new Command()
+  .name(packageJson.name)
+  .description(packageJson.description)
+  .version(packageJson.version)
+  .argument('[pattern]', 'pattern for source files (omit to find automatically)')
+  .option('-i, --ignore [pattern]', 'pattern for ignored files', '**/*.@(spec|test).*')
+  .option('-p, --project [string]', 'path to tsconfig.json (omit to resolve automatically)')
+  .option('-e, --errors', 'emit tsc errors')
+  .action(
+    (
+      pattern,
+      {
+        ignore: ignoredFilesPattern,
+        errors: tscErrors,
+        project: pathToTsconfig,
+      }: {ignore: string; errors: boolean; project?: string},
+    ) => {
+      const createProgram = () => {
+        const {compilerOptions, files} = resolveTsConfig(pathToTsconfig);
+        const params = process.argv.slice(2);
+        const providedFiles = params.length ? params.flatMap((f) => glob.sync(f)) : undefined;
+        const entrypoints = providedFiles ?? files;
 
-const createProgram = () => {
-  const {compilerOptions, files} = resolveTsConfig();
-  const params = process.argv.slice(2);
-  const providedFiles = params.length ? params.flatMap((f) => glob.sync(f)) : undefined;
-  const entrypoints = providedFiles ?? files;
+        if (entrypoints.length === 0) {
+          throw new Error("Couldn't find any files");
+        }
 
-  if (entrypoints.length === 0) {
-    throw new Error('Missing entrypoints, add files in tsconfg.json or pass them as arguments');
-  }
+        const program = ts.createProgram({
+          rootNames: entrypoints,
+          options: compilerOptions,
+        });
 
-  const program = ts.createProgram({
-    rootNames: entrypoints,
-    options: compilerOptions,
-  });
+        if (tscErrors) {
+          console.log(
+            ts.formatDiagnosticsWithColorAndContext(ts.getPreEmitDiagnostics(program), {
+              getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
+              getCanonicalFileName: (f) => f,
+              getNewLine: () => '\n',
+            }),
+          );
+        }
 
-  if (!process.env.NO_TSC_ERRORS) {
-    console.log(
-      ts.formatDiagnosticsWithColorAndContext(ts.getPreEmitDiagnostics(program), {
-        getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
-        getCanonicalFileName: (f) => f,
-        getNewLine: () => '\n',
-      }),
-    );
-  }
+        return program;
+      };
 
-  return program;
-};
+      const {seenIdentifiers, usedIdentifiers} = analyze(createProgram(), {
+        ignoredFilesPattern,
+      });
 
-const {seenIdentifiers, usedIdentifiers} = analyze(createProgram(), {ignoredFilesPattern});
+      const unusedIdentifiers = Array.from(seenIdentifiers).filter((i) => !usedIdentifiers.has(i));
+      let diagnostics: ts.DiagnosticWithLocation[] = unusedIdentifiers.map((identifier) => ({
+        category: ts.DiagnosticCategory.Message,
+        code: 0,
+        file: identifier.getSourceFile(),
+        length: identifier.getWidth(),
+        messageText: 'Unused identifier',
+        start: identifier.getStart(),
+      }));
+      console.log(
+        ts.formatDiagnosticsWithColorAndContext(diagnostics, {
+          getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
+          getCanonicalFileName: (f) => f,
+          getNewLine: () => '\n',
+        }),
+      );
 
-const unusedIdentifiers = Array.from(seenIdentifiers).filter((i) => !usedIdentifiers.has(i));
-let diagnostics: ts.DiagnosticWithLocation[] = unusedIdentifiers.map((identifier) => ({
-  category: ts.DiagnosticCategory.Message,
-  code: 0,
-  file: identifier.getSourceFile(),
-  length: identifier.getWidth(),
-  messageText: 'Unused identifier',
-  start: identifier.getStart(),
-}));
-console.log(
-  ts.formatDiagnosticsWithColorAndContext(diagnostics, {
-    getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
-    getCanonicalFileName: (f) => f,
-    getNewLine: () => '\n',
-  }),
-);
-
-console.log(`Total: ${unusedIdentifiers.length} unused identifiers`);
+      console.log(`Total: ${unusedIdentifiers.length} unused identifiers`);
+    },
+  )
+  .parse();

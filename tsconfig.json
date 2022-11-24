@@ -9,6 +9,7 @@
     "outDir": "lib",
     "sourceMap": true,
     "declaration": true,
+    "resolveJsonModule": true,
     "lib": [
       "esnext"
     ],
