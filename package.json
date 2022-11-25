@@ -12,7 +12,7 @@
   },
   "main": "./lib/index.js",
   "exports": "./lib/index.js",
-  "bin": "./lib/cli/index.js",
+  "bin": "./cli.js",
   "scripts": {
     "build": "rm -rf lib/* ; tsc",
     "lint": "eslint src/**/*.ts",
