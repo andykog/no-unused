@@ -11,6 +11,21 @@ Finds unused properties in code utilizing TypeScript type system.
 npx no-unused src/**/*.ts
 ```
 
+```
+Arguments:
+  pattern                 pattern for source files (omit to find automatically)
+
+Options:
+  -V, --version           output the version number
+  -i, --ignore [pattern]  pattern for ignored files (default: "**/*.@(spec|test).*")
+  -p, --project [string]  path to tsconfig.json (omit to resolve automatically)
+  -e, --errors            emit tsc errors
+  -h, --help              display help for command
+```
+
+Note: files matched with `--ignore` won't be analyzed. Files containing `.spec.` or `.test.`
+are ignored by default to also find identifiers that are used only in tests.
+
 
 ### Example output
 
