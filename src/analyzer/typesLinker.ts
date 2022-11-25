@@ -26,11 +26,7 @@ const forEachTypeConstituent = (type: ts.Type, cb: (t: ts.Type) => void) => {
 
 const forEachTypeArgument = (type: ts.Type, cb: (t: ts.Type, i: number) => void) => {
   if (_.isTypeReference(type)) {
-    tc()
-      .getTypeArguments(type)
-      .forEach((t, i) => {
-        cb(t, i);
-      });
+    tc().getTypeArguments(type).forEach(cb);
   }
 };
 
@@ -104,17 +100,16 @@ export const linkTypes = (
   sourceType: ts.Type,
   targetType: ts.Type,
   location: ts.Node,
-  seenSource = new WeakSet<any>(),
-  seenTarget = new WeakSet<any>(),
+  seen = new WeakMap<any, WeakSet<any>>(),
 ) => {
   if (!sourceType) return;
   if (sourceType === targetType) return;
-  if (seenSource.has(getTypeId(sourceType)) && seenTarget.has(getTypeId(targetType))) return;
-  seenSource.add(getTypeId(sourceType));
-  seenTarget.add(getTypeId(targetType));
+  if (seen.get(getTypeId(sourceType))?.has(getTypeId(targetType))) return;
+  if (!seen.has(getTypeId(sourceType))) seen.set(getTypeId(sourceType), new WeakSet());
+  seen.get(getTypeId(sourceType))!.add(getTypeId(targetType));
 
   if (targetType.flags & ts.TypeFlags.Any) {
-    findEachSymbolInType(sourceType, location, (s) => use(s));
+    findEachSymbolInType(sourceType, location, use);
     return;
   }
 
@@ -126,7 +121,7 @@ export const linkTypes = (
           : undefined;
         if (targetPType) {
           use(sourcePType.symbol);
-          linkTypes(sourcePType, targetPType, location, seenSource, seenTarget);
+          linkTypes(sourcePType, targetPType, location, seen);
         }
       });
 
@@ -141,13 +136,13 @@ export const linkTypes = (
           : undefined;
         if (targetPType) {
           use(sourcePSymbol);
-          linkTypes(sourcePType, targetPType, location, seenSource, seenTarget);
+          linkTypes(sourcePType, targetPType, location, seen);
         }
       });
 
       forEachReturnType(sourceType, (sourceReturnType) => {
         forEachReturnType(targetType, (targetReturnType) => {
-          linkTypes(sourceReturnType, targetReturnType, location, seenSource, seenTarget);
+          linkTypes(sourceReturnType, targetReturnType, location, seen);
         });
       });
 
@@ -156,11 +151,11 @@ export const linkTypes = (
           souceParams.forEach((sourcePType, i) => {
             const targetPType = targetParams[i];
             if (targetPType === sourcePType) {
-              findEachSymbolInType(targetPType, location, (s) => use(s));
+              findEachSymbolInType(targetPType, location, use);
               return;
             }
             // Parameters are in contravariant position, so source & target are flipped
-            linkTypes(targetPType, sourcePType, location, seenSource, seenTarget);
+            linkTypes(targetPType, sourcePType, location, seen);
           });
         });
       });

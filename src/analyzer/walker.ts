@@ -126,7 +126,7 @@ export const walk = (node?: ts.Node) => {
           const targetType = tc().getTypeFromTypeNode(n) as ts.InterfaceType;
           linkTypes(sourceType, targetType, node);
         });
-      node.forEachChild((child) => walk(child));
+      node.forEachChild(walk);
     });
   } else if (_.isReturnStatement(node)) {
     if (node.expression) {
@@ -161,7 +161,7 @@ export const walk = (node?: ts.Node) => {
     }
   } else if (_.isCallExpression(node)) {
     use(tc().getSymbolAtLocation(node.expression));
-    node.arguments.forEach((a) => walk(a));
+    node.arguments.forEach(walk);
     walk(node.expression);
 
     const exprType = tc().getTypeAtLocation(node.expression);
@@ -178,7 +178,7 @@ export const walk = (node?: ts.Node) => {
     });
   } else if (_.isNewExpression(node)) {
     use(tc().getSymbolAtLocation(node.expression));
-    node.forEachChild((child) => walk(child));
+    node.forEachChild(walk);
   } else if (_.isVariableDeclaration(node) || _.isPropertyDeclaration(node)) {
     see(node);
     if (node.type) {
@@ -209,8 +209,8 @@ export const walk = (node?: ts.Node) => {
     use(originalSymbol);
     see(node);
   } else if (_.isPropertyAssignment(node)) {
-    node.forEachChild((child) => walk(child));
+    node.forEachChild(walk);
   } else {
-    node.forEachChild((child) => walk(child));
+    node.forEachChild(walk);
   }
 };
