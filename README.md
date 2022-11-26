@@ -28,7 +28,7 @@ Options:
 are ignored by default to also find identifiers that are used only in tests.*
 
 
-### Example output
+### Example
 
 **Source file:**
 
@@ -63,6 +63,7 @@ Total: 2 unused identifiers
 App entrypoints appear unused because they are meant to be used by external code. To ignore them:
 
 **Option 1**
+
 Use `--ignoreExports entrypointsPattern`
 
 ```sh
@@ -71,13 +72,14 @@ npx no-unused src/**/*.ts --ignoreExports 'src/entrypoint.ts,src/otherEntrypoint
 
 **Option 2**
 
-add `/** @public */` comment:
+Add `/** @public */` comment for exports used by external code:
 
 ```ts
 /** @public */
-export const renderApp = () => ({ignoredAsWell});
+export const renderApp = () => {...};
 
-function ignoredAsWell() {};
+/** @public */
+export const appConfig = {...};
 ```
 
 
