@@ -4,8 +4,7 @@ import * as ts from 'typescript';
 import * as _ from 'tsutils';
 import {analyze} from '../src/analyzer';
 
-const resolve = (...pathComponents: string[]) =>
-  path.resolve(__dirname, ...pathComponents);
+const resolve = (...pathComponents: string[]) => path.resolve(__dirname, ...pathComponents);
 
 const createTestProgram = (filePath: string) => {
   return ts.createProgram({
@@ -23,9 +22,7 @@ const createTestProgram = (filePath: string) => {
 };
 
 const getNodeLine = (node: ts.Node) => {
-  const {line} = node
-    .getSourceFile()
-    .getLineAndCharacterOfPosition(node.getStart());
+  const {line} = node.getSourceFile().getLineAndCharacterOfPosition(node.getStart());
   return line + 1;
 };
 
@@ -48,23 +45,22 @@ export const getFiles = (specsFolder: string) =>
   fs
     .readdirSync(resolve(specsFolder))
     .filter((name) => name.endsWith('.ts'))
-    .map(f => resolve(specsFolder, f));
+    .map((f) => resolve(specsFolder, f));
 
 export const testUnusedProperties = (filePath: string) => {
   const program = createTestProgram(filePath);
   const sourceFile = program.getSourceFile(filePath);
-  const {seenIdentifiers, usedIdentifiers} = analyze(program);
+  const {seenIdentifiers, usedIdentifiers} = analyze(program, {
+    ignoredExportsPattern: '**/ignoredExports.ts',
+  });
   const expectedUnused = getExpectedUnused(sourceFile!);
 
-  const unusedIdentifiers = Array.from(seenIdentifiers).filter(
-    (i) => !usedIdentifiers.has(i),
-  );
+  const unusedIdentifiers = Array.from(seenIdentifiers).filter((i) => !usedIdentifiers.has(i));
 
   unusedIdentifiers.forEach((identifier, identifierIdx) => {
     const expectedIdx = expectedUnused.findIndex(
       ({name, lineNumber}) =>
-        identifier.escapedText === name &&
-        getNodeLine(identifier) === lineNumber,
+        identifier.escapedText === name && getNodeLine(identifier) === lineNumber,
     );
     if (expectedIdx !== -1) {
       expectedUnused.splice(expectedIdx, 1);
@@ -72,12 +68,9 @@ export const testUnusedProperties = (filePath: string) => {
     }
   });
 
-  const expected = expectedUnused.map(
-    ({name, lineNumber}) => `${name} (line ${lineNumber})`,
-  );
+  const expected = expectedUnused.map(({name, lineNumber}) => `${name} (line ${lineNumber})`);
   const actual = unusedIdentifiers.map(
-    (identifier) =>
-      `${identifier.escapedText} (line ${getNodeLine(identifier)})`,
+    (identifier) => `${identifier.escapedText} (line ${getNodeLine(identifier)})`,
   );
 
   return {expected, actual};

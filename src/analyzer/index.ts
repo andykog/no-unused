@@ -1,11 +1,15 @@
 import * as ts from 'typescript';
-import {seenIdentifiers, usedIdentifiers, setTypeChecker} from './state';
+import {seenIdentifiers, usedIdentifiers, setTypeChecker, setIgnoreExports} from './state';
 import {walk} from './walker';
 import minimatch from 'minimatch';
 
 type Options = {
   ignoredFilesPattern?: string;
+  ignoredExportsPattern?: string;
 };
+
+const matchesGlob = (fileName: string, pattern: string = '') =>
+  pattern.split(',').some((pattern) => minimatch(fileName, pattern));
 
 export const analyze = (program: ts.Program, options: Options = {}) => {
   seenIdentifiers.clear();
@@ -16,10 +20,12 @@ export const analyze = (program: ts.Program, options: Options = {}) => {
     .filter(
       (f) => !program.isSourceFileFromExternalLibrary(f) && !program.isSourceFileDefaultLibrary(f),
     )
-    .filter(
-      (f) => !options.ignoredFilesPattern || !minimatch(f.fileName, options.ignoredFilesPattern),
-    )
-    .forEach(walk);
+    .filter((f) => !matchesGlob(f.fileName, options.ignoredFilesPattern))
+    .forEach((f) => {
+      const ignoreExports = matchesGlob(f.fileName, options.ignoredExportsPattern);
+      setIgnoreExports(ignoreExports);
+      walk(f);
+    });
 
   return {seenIdentifiers, usedIdentifiers};
 };

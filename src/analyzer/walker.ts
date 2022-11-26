@@ -2,7 +2,7 @@ import * as ts from 'typescript';
 import * as _ from 'tsutils';
 import {logDebug} from '../utils/debugLog';
 import {
-  tc,
+  checker,
   usedIdentifiers,
   functionsStack,
   whitelistStack,
@@ -10,14 +10,17 @@ import {
   withWhitelistStack,
   use,
   see,
+  ignoreExports,
+  setInsideIgnoredExport,
+  insideIgnoredExport,
 } from './state';
 import {extractIdentifiersFromType, linkTypes, findEachSymbolInType} from './typesLinker';
 
 const getClassType = (node: ts.ClassLikeDeclaration) => {
-  const type = tc().getTypeAtLocation(node);
+  const type = checker.getTypeAtLocation(node);
   if (_.isClassExpression(node)) {
-    const signature = tc().getSignaturesOfType(type, ts.SignatureKind.Construct)[0];
-    return signature && tc().getReturnTypeOfSignature(signature);
+    const signature = checker.getSignaturesOfType(type, ts.SignatureKind.Construct)[0];
+    return signature && checker.getReturnTypeOfSignature(signature);
   }
   return type;
 };
@@ -35,7 +38,7 @@ const linkBindingPattern = (
       const identifier = element.propertyName ?? element.name;
       if (identifier && _.isIdentifier(identifier)) {
         const symbol = sourceType.getProperty(String(identifier.escapedText));
-        const type = symbol && tc().getTypeOfSymbolAtLocation(symbol, node);
+        const type = symbol && checker.getTypeOfSymbolAtLocation(symbol, node);
         if (type) {
           linkBindingPattern(type, element.name, symbol);
         }
@@ -62,19 +65,23 @@ const handleReturn = (node: ts.Node, parentFunction?: ts.FunctionLikeDeclaration
     logDebug('Missing parent function type');
     return;
   }
-  const sourceType = tc().getTypeAtLocation(node);
-  const targetType = tc().getTypeAtLocation(parentFunction.type);
+  const sourceType = checker.getTypeAtLocation(node);
+  const targetType = checker.getTypeAtLocation(parentFunction.type);
   use(sourceType.symbol);
   linkTypes(sourceType, targetType, node);
 };
 
+const isExported = (node: ts.Node) => {
+  const {modifiers} = node as any;
+  return _.hasModifier(modifiers, ts.SyntaxKind.ExportKeyword);
+};
 export const walk = (node?: ts.Node) => {
   if (!node) return;
 
   const whitelistIdentifiers = whitelistStack.at(-1);
   if (whitelistIdentifiers) {
-    const type = tc().getTypeAtLocation(node);
-    const actualIdentifiers = extractIdentifiersFromType(tc().getTypeAtLocation(node), node);
+    const type = checker.getTypeAtLocation(node);
+    const actualIdentifiers = extractIdentifiersFromType(checker.getTypeAtLocation(node), node);
     Array.from(actualIdentifiers ?? []).forEach((i) => {
       if (!whitelistIdentifiers.has(i)) {
         usedIdentifiers.add(i);
@@ -82,9 +89,18 @@ export const walk = (node?: ts.Node) => {
     });
   }
 
-  if (ts.getJSDocTags(node).some(({tagName}) => tagName.escapedText === 'public')) {
+  if (ignoreExports && isExported(node) && !insideIgnoredExport) {
+    setInsideIgnoredExport(true);
+    walk(node);
+    setInsideIgnoredExport(false);
+  }
+
+  if (
+    insideIgnoredExport ||
+    ts.getJSDocTags(node).some(({tagName}) => tagName.escapedText === 'public')
+  ) {
     use(node);
-    const type = tc().getTypeAtLocation(node);
+    const type = checker.getTypeAtLocation(node);
     findEachSymbolInType(type, node, use);
   }
 
@@ -98,13 +114,13 @@ export const walk = (node?: ts.Node) => {
 
     if (_.isAssignmentKind(node.operatorToken.kind)) {
       withWhitelistStack(
-        extractIdentifiersFromType(tc().getTypeAtLocation(node.right), node),
+        extractIdentifiersFromType(checker.getTypeAtLocation(node.right), node),
         () => {
           walk(node.right);
         },
       );
-      const sourceType = tc().getTypeAtLocation(node.right);
-      const targetType = tc().getTypeAtLocation(node.left);
+      const sourceType = checker.getTypeAtLocation(node.right);
+      const targetType = checker.getTypeAtLocation(node.left);
       use(sourceType.symbol);
       linkTypes(sourceType, targetType, node.left);
     } else {
@@ -114,7 +130,7 @@ export const walk = (node?: ts.Node) => {
     see(node);
     walk(node.type);
   } else if (_.isIdentifier(node)) {
-    const symbol = tc().getSymbolAtLocation(node);
+    const symbol = checker.getSymbolAtLocation(node);
     symbol?.declarations?.filter(({pos}) => pos !== node.pos).forEach(use);
   } else if (_.isClassExpression(node) || _.isClassDeclaration(node)) {
     withWhitelistStack(undefined, () => {
@@ -123,7 +139,7 @@ export const walk = (node?: ts.Node) => {
         ?.flatMap((clause) => clause.types)
         .forEach((n) => {
           use(sourceType.symbol);
-          const targetType = tc().getTypeFromTypeNode(n) as ts.InterfaceType;
+          const targetType = checker.getTypeFromTypeNode(n) as ts.InterfaceType;
           linkTypes(sourceType, targetType, node);
         });
       node.forEachChild(walk);
@@ -146,7 +162,7 @@ export const walk = (node?: ts.Node) => {
       node.parameters.forEach((p) => {
         see(p);
         if (_.isBindingPattern(p.name) && p.type) {
-          linkBindingPattern(tc().getTypeFromTypeNode(p.type), p.name);
+          linkBindingPattern(checker.getTypeFromTypeNode(p.type), p.name);
         }
         walk(p);
       });
@@ -160,41 +176,41 @@ export const walk = (node?: ts.Node) => {
       handleReturn(node.body, node);
     }
   } else if (_.isCallExpression(node)) {
-    use(tc().getSymbolAtLocation(node.expression));
+    use(checker.getSymbolAtLocation(node.expression));
     node.arguments.forEach(walk);
     walk(node.expression);
 
-    const exprType = tc().getTypeAtLocation(node.expression);
+    const exprType = checker.getTypeAtLocation(node.expression);
 
     node.arguments.forEach((argument, i) => {
-      const argumentType = tc().getTypeAtLocation(argument);
+      const argumentType = checker.getTypeAtLocation(argument);
       exprType.getCallSignatures().forEach((sig) => {
         use(argumentType.symbol);
         const targetPSymbol = sig.parameters[i];
         if (!targetPSymbol) return;
-        const targetType = tc().getTypeOfSymbolAtLocation(targetPSymbol, argument);
+        const targetType = checker.getTypeOfSymbolAtLocation(targetPSymbol, argument);
         linkTypes(argumentType, targetType, argument);
       });
     });
   } else if (_.isNewExpression(node)) {
-    use(tc().getSymbolAtLocation(node.expression));
+    use(checker.getSymbolAtLocation(node.expression));
     node.forEachChild(walk);
   } else if (_.isVariableDeclaration(node) || _.isPropertyDeclaration(node)) {
     see(node);
     if (node.type) {
       withWhitelistStack(
-        extractIdentifiersFromType(tc().getTypeFromTypeNode(node.type), node),
+        extractIdentifiersFromType(checker.getTypeFromTypeNode(node.type), node),
         () => walk(node.type),
       );
     }
     if (node.initializer) {
       withWhitelistStack(
-        extractIdentifiersFromType(tc().getTypeAtLocation(node.initializer), node),
+        extractIdentifiersFromType(checker.getTypeAtLocation(node.initializer), node),
         () => walk(node.initializer),
       );
-      const sourceType = tc().getTypeAtLocation(node.initializer);
+      const sourceType = checker.getTypeAtLocation(node.initializer);
       if (node.type) {
-        const targetType = tc().getTypeAtLocation(node.type);
+        const targetType = checker.getTypeAtLocation(node.type);
         use(sourceType.symbol);
         linkTypes(sourceType, targetType, node.initializer);
       } else if (_.isBindingPattern(node.name)) {
@@ -205,7 +221,7 @@ export const walk = (node?: ts.Node) => {
     see(node);
     walk(node.initializer);
   } else if (_.isShorthandPropertyAssignment(node)) {
-    const originalSymbol = tc().getShorthandAssignmentValueSymbol(node);
+    const originalSymbol = checker.getShorthandAssignmentValueSymbol(node);
     use(originalSymbol);
     see(node);
   } else if (_.isPropertyAssignment(node)) {

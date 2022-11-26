@@ -13,18 +13,19 @@ npx no-unused src/**/*.ts
 
 ```
 Arguments:
-  pattern                 pattern for source files (omit to find automatically)
+  pattern                        pattern for source files (omit to find automatically)
 
 Options:
-  -V, --version           output the version number
-  -i, --ignore [pattern]  pattern for ignored files (default: "**/*.@(spec|test).*")
-  -p, --project [string]  path to tsconfig.json (omit to resolve automatically)
-  -e, --errors            emit tsc errors
-  -h, --help              display help for command
+  -V, --version                  output the version number
+  -i, --ignore [pattern]         pattern for ignored files (default: "**/*.@(spec|test).*")
+  -I, --ignoreExports [pattern]  pattern for files where exports are ignored
+  -p, --project [string]         path to tsconfig.json (omit to resolve automatically)
+  -e, --errors                   emit tsc errors
+  -h, --help                     display help for command
 ```
 
-Note: files matched with `--ignore` won't be analyzed. Files containing `.spec.` or `.test.`
-are ignored by default to also find identifiers that are used only in tests.
+*Note: files matched with `--ignore` won't be analyzed. Files containing `.spec.` or `.test.`
+are ignored by default to also find identifiers that are used only in tests.*
 
 
 ### Example output
@@ -59,8 +60,18 @@ Total: 2 unused identifiers
 
 ## Ignoring unused app entrypoints
 
-App entrypoints appear unused because they are meant to be used by external code.
-To ignore them add `/** @public */` comment:
+App entrypoints appear unused because they are meant to be used by external code. To ignore them:
+
+**Option 1**
+Use `--ignoreExports entrypointsPattern`
+
+```sh
+npx no-unused src/**/*.ts --ignoreExports 'src/entrypoint.ts,src/otherEntrypoints/*.ts'
+```
+
+**Option 2**
+
+add `/** @public */` comment:
 
 ```ts
 /** @public */

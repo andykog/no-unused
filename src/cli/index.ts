@@ -11,6 +11,7 @@ const command = new Command()
   .version(packageJson.version)
   .argument('[pattern]', 'pattern for source files (omit to find automatically)')
   .option('-i, --ignore [pattern]', 'pattern for ignored files', '**/*.@(spec|test).*')
+  .option('-I, --ignoreExports [pattern]', 'pattern for files where exports are ignored', [])
   .option('-p, --project [string]', 'path to tsconfig.json (omit to resolve automatically)')
   .option('-e, --errors', 'emit tsc errors')
   .action(
@@ -18,10 +19,12 @@ const command = new Command()
       pattern,
       {
         ignore: ignoredFilesPattern,
+        ignoreExports: ignoredExportsPattern,
         errors: tscErrors,
         project: pathToTsconfig,
-      }: {ignore: string; errors: boolean; project?: string},
+      }: {ignore: string; errors: boolean; project?: string; ignoreExports?: string},
     ) => {
+      console.log({pattern, ignoredExportsPattern})
       const createProgram = () => {
         const {compilerOptions, files} = resolveTsConfig(pathToTsconfig);
         const params = process.argv.slice(2);
@@ -52,6 +55,7 @@ const command = new Command()
 
       const {seenIdentifiers, usedIdentifiers} = analyze(createProgram(), {
         ignoredFilesPattern,
+        ignoredExportsPattern,
       });
 
       const unusedIdentifiers = Array.from(seenIdentifiers).filter((i) => !usedIdentifiers.has(i));

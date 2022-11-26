@@ -1,13 +1,13 @@
 import ts from 'typescript';
 import * as _ from 'tsutils';
-import {tc, use, see} from './state';
+import {checker, use, see} from './state';
 
 const getTypeId = (type?: ts.Type) => type?.symbol?.declarations?.[0] ?? type;
 
 const forEachConditionalBranch = (type: ts.ConditionalType, cb: (t: ts.Type) => void) => {
   // make sure truetype is resolved https://github.com/microsoft/TypeScript/issues/45537
   if (!type.resolvedTrueType) {
-    tc().typeToTypeNode(type, undefined, undefined);
+    checker.typeToTypeNode(type, undefined, undefined);
   }
   cb(type.resolvedTrueType!);
   cb(type.resolvedFalseType!);
@@ -26,7 +26,7 @@ const forEachTypeConstituent = (type: ts.Type, cb: (t: ts.Type) => void) => {
 
 const forEachTypeArgument = (type: ts.Type, cb: (t: ts.Type, i: number) => void) => {
   if (_.isTypeReference(type)) {
-    tc().getTypeArguments(type).forEach(cb);
+    checker.getTypeArguments(type).forEach(cb);
   }
 };
 
@@ -36,21 +36,23 @@ const forEachPropertyInType = (
   cb: (t: ts.Type, s: ts.Symbol) => void,
 ) => {
   type.getProperties().forEach((s) => {
-    const t = tc().getTypeOfSymbolAtLocation(s, location);
+    const t = checker.getTypeOfSymbolAtLocation(s, location);
     cb(t, s);
   });
 };
 
 const forEachReturnType = (type: ts.Type, cb: (t: ts.Type) => void) => {
   type.getCallSignatures().forEach((sig) => {
-    const returnType = tc().getReturnTypeOfSignature(sig);
+    const returnType = checker.getReturnTypeOfSignature(sig);
     if (returnType) cb(returnType);
   });
 };
 
 const forEachTypeParameters = (type: ts.Type, location: ts.Node, cb: (t: ts.Type[]) => void) => {
   type.getCallSignatures().forEach((sig) => {
-    const parametersTypes = sig.parameters.map((s) => tc().getTypeOfSymbolAtLocation(s, location));
+    const parametersTypes = sig.parameters.map((s) =>
+      checker.getTypeOfSymbolAtLocation(s, location),
+    );
     cb(parametersTypes);
   });
 };
@@ -132,7 +134,7 @@ export const linkTypes = (
           return;
         }
         const targetPType = targetPSymbol
-          ? tc().getTypeOfSymbolAtLocation(targetPSymbol, location)
+          ? checker.getTypeOfSymbolAtLocation(targetPSymbol, location)
           : undefined;
         if (targetPType) {
           use(sourcePSymbol);

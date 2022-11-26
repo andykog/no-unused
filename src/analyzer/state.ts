@@ -16,11 +16,20 @@ export const withWhitelistStack = (node: Set<ts.Identifier> | undefined, cb: () 
   whitelistStack.pop();
 };
 
-let typeChecker: ts.TypeChecker;
+export let checker: ts.TypeChecker;
+export let ignoreExports = false;
+export let insideIgnoredExport = false;
 
-export const tc = () => typeChecker;
 export const setTypeChecker = (t: ts.TypeChecker) => {
-  typeChecker = t;
+  checker = t;
+};
+
+export const setIgnoreExports = (ignore: boolean) => {
+  ignoreExports = ignore;
+};
+
+export const setInsideIgnoredExport = (value: boolean) => {
+  insideIgnoredExport = value;
 };
 
 export const use = (node?: ts.Symbol | (ts.Node & {name?: any})) => {
