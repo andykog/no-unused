@@ -2,9 +2,7 @@
   "name": "no-unused",
   "version": "0.0.x",
   "description": "Finds unused properties in TypeScript code",
-  "keywords": [
-    "typescript"
-  ],
+  "keywords": ["typescript", "cli", "code", "unused", "ast", "lint", "linter", "checker"],
   "author": "Andrew Kogut",
   "repository": {
     "type": "git",
