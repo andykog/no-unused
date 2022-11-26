@@ -13,7 +13,10 @@
       "plugins": ["no-unused"],
       "rules": {
         "prettier/prettier": "off",
-        "no-unused/no-unused": ["warn", {"ignore": "**/*.disable.ts"}]
+        "no-unused/no-unused": ["warn", {
+          "ignore": "**/*.disable.ts",
+          "ignoreExports": "**/ignoredExports.ts"
+        }]
       }
     }
   ]

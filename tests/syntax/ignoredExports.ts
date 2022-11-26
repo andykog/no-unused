@@ -1,3 +1,9 @@
+/*
+ * Exports in this file are ignored by `ignoredExportsPattern`, configured in:
+ * - tests/utils.ts
+ * - tests/.eslintrc.json
+ */
+
 export const c = {a: 1};
 
 export const a = (_props: {a: number}) => ({b: 1});
