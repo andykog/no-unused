@@ -1,5 +1,6 @@
 import * as ts from 'typescript';
 import * as _ from 'tsutils';
+import * as path from 'path';
 import {logDebug} from '../utils/debugLog';
 import {
   checker,
@@ -10,9 +11,10 @@ import {
   withWhitelistStack,
   use,
   see,
-  ignoreExports,
   setInsideIgnoredExport,
   insideIgnoredExport,
+  addExport,
+  addRequiredPath,
 } from './state';
 import {extractIdentifiersFromType, linkTypes, findEachSymbolInType} from './typesLinker';
 
@@ -96,10 +98,8 @@ export const walk = (node?: ts.Node) => {
     });
   }
 
-  if (ignoreExports && isExported(node) && !insideIgnoredExport) {
-    setInsideIgnoredExport(true);
-    walk(node);
-    setInsideIgnoredExport(false);
+  if (isExported(node) && !insideIgnoredExport) {
+    addExport(node);
   }
 
   if (
@@ -188,6 +188,16 @@ export const walk = (node?: ts.Node) => {
     walk(node.expression);
 
     const exprType = checker.getTypeAtLocation(node.expression);
+    const firstArgument = node.arguments[0];
+
+    if (
+      _.isIdentifier(node.expression) &&
+      node.expression.escapedText === 'require' &&
+      _.isStringLiteral(firstArgument)
+    ) {
+      addRequiredPath(path.join(path.dirname(node.getSourceFile().fileName), firstArgument.text));
+      return;
+    }
 
     node.arguments.forEach((argument, i) => {
       const argumentType = checker.getTypeAtLocation(argument);

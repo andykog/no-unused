@@ -16,7 +16,7 @@ const command = new Command()
   .option('-e, --errors', 'emit tsc errors')
   .action(
     (
-      includeFilesPattern,
+      includeFilesPattern: string | undefined,
       {
         ignore: ignoredFilesPattern,
         ignoreExports: ignoredExportsPattern,
@@ -24,35 +24,30 @@ const command = new Command()
         project: pathToTsconfig,
       }: {ignore: string; errors: boolean; project?: string; ignoreExports?: string},
     ) => {
-      const createProgram = () => {
-        const {compilerOptions, files} = resolveTsConfig(pathToTsconfig);
-        const params = process.argv.slice(2);
-        const providedFiles = params.length ? params.flatMap((f) => glob.sync(f)) : undefined;
-        const entrypoints = providedFiles ?? files;
+      const tsConfig = resolveTsConfig(pathToTsconfig);
+      const entrypoints =
+        includeFilesPattern?.split(',').flatMap((f) => glob.sync(f)) ?? tsConfig.files;
 
-        if (entrypoints.length === 0) {
-          throw new Error("Couldn't find any files");
-        }
+      if (entrypoints.length === 0) {
+        throw new Error("Couldn't find any files");
+      }
 
-        const program = ts.createProgram({
-          rootNames: entrypoints,
-          options: compilerOptions,
-        });
+      const program = ts.createProgram({
+        rootNames: entrypoints,
+        options: tsConfig.compilerOptions,
+      });
 
-        if (tscErrors) {
-          console.log(
-            ts.formatDiagnosticsWithColorAndContext(ts.getPreEmitDiagnostics(program), {
-              getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
-              getCanonicalFileName: (f) => f,
-              getNewLine: () => '\n',
-            }),
-          );
-        }
+      if (tscErrors) {
+        console.log(
+          ts.formatDiagnosticsWithColorAndContext(ts.getPreEmitDiagnostics(program), {
+            getCurrentDirectory: () => ts.sys.getCurrentDirectory(),
+            getCanonicalFileName: (f) => f,
+            getNewLine: () => '\n',
+          }),
+        );
+      }
 
-        return program;
-      };
-
-      const {seenIdentifiers, usedIdentifiers} = analyze(createProgram(), {
+      const {seenIdentifiers, usedIdentifiers} = analyze(program, {
         includeFilesPattern,
         ignoredFilesPattern,
         ignoredExportsPattern,

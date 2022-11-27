@@ -1,5 +1,13 @@
 import * as ts from 'typescript';
-import {seenIdentifiers, usedIdentifiers, setTypeChecker, setIgnoreExports} from './state';
+import * as path from 'path';
+import {
+  seenIdentifiers,
+  usedIdentifiers,
+  setTypeChecker,
+  setInsideIgnoredExport,
+  exportsByFile,
+  requiredPaths,
+} from './state';
 import {walk} from './walker';
 import minimatch from 'minimatch';
 
@@ -9,28 +17,44 @@ type Options = {
   ignoredExportsPattern?: string;
 };
 
-const matchesGlob = (fileName: string, pattern: string = '') =>
-  pattern.split(',').some((pattern) => minimatch(fileName, pattern));
+const matchesGlob = (fileName: string, pattern: string = '') => {
+  const relativeFileName = path.relative(process.cwd(), fileName);
+  return pattern.split(',').some((pattern) => minimatch(relativeFileName, pattern));
+};
+
+const deduplicate = <T>(arr: T[]) => Array.from(new Set(arr));
 
 export const analyze = (program: ts.Program, options: Options = {}) => {
   seenIdentifiers.clear();
   setTypeChecker(program.getTypeChecker());
 
-  program
+  const sourceFiles = program
     .getSourceFiles()
     .filter(
-      (f) => !program.isSourceFileFromExternalLibrary(f) && !program.isSourceFileDefaultLibrary(f),
+      (file) =>
+        !program.isSourceFileFromExternalLibrary(file) && !program.isSourceFileDefaultLibrary(file),
     )
     .filter(
-      (f) =>
-        (!options.includeFilesPattern || matchesGlob(f.fileName, options.includeFilesPattern)) &&
-        !matchesGlob(f.fileName, options.ignoredFilesPattern),
-    )
-    .forEach((f) => {
-      const ignoreExports = matchesGlob(f.fileName, options.ignoredExportsPattern);
-      setIgnoreExports(ignoreExports);
-      walk(f);
-    });
+      (file) =>
+        (!options.includeFilesPattern || matchesGlob(file.fileName, options.includeFilesPattern)) &&
+        !matchesGlob(file.fileName, options.ignoredFilesPattern),
+    );
+  sourceFiles.forEach(walk);
+
+  const ignoredExportsFilePaths = options.ignoredExportsPattern
+    ? sourceFiles
+        .filter((f) => matchesGlob(f.fileName, options.ignoredExportsPattern))
+        .map((f) => f.fileName)
+    : [];
+  const requiredFilePaths = sourceFiles
+    .filter((f) => requiredPaths.has(f.fileName.replace(/.tsx?$/, '')))
+    .map((f) => f.fileName);
+
+  setInsideIgnoredExport(true);
+  deduplicate([...ignoredExportsFilePaths, ...requiredFilePaths])
+    .flatMap((f) => exportsByFile.get(f) ?? [])
+    .forEach(walk);
+  setInsideIgnoredExport(false);
 
   return {seenIdentifiers, usedIdentifiers};
 };

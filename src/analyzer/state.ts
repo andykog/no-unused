@@ -10,6 +10,7 @@ export const withFunctionsStack = (node: ts.FunctionLikeDeclarationBase, cb: () 
   cb();
   functionsStack.pop();
 };
+
 export const withWhitelistStack = (node: Set<ts.Identifier> | undefined, cb: () => void) => {
   whitelistStack.push(node);
   cb();
@@ -17,19 +18,29 @@ export const withWhitelistStack = (node: Set<ts.Identifier> | undefined, cb: () 
 };
 
 export let checker: ts.TypeChecker;
-export let ignoreExports = false;
+
 export let insideIgnoredExport = false;
 
 export const setTypeChecker = (t: ts.TypeChecker) => {
   checker = t;
 };
 
-export const setIgnoreExports = (ignore: boolean) => {
-  ignoreExports = ignore;
-};
-
 export const setInsideIgnoredExport = (value: boolean) => {
   insideIgnoredExport = value;
+};
+
+export const exportsByFile = new Map<string, ts.Node[]>();
+
+export const addExport = (node: ts.Node) => {
+  const {fileName} = node.getSourceFile();
+  if (!exportsByFile.has(fileName)) exportsByFile.set(fileName, []);
+  exportsByFile.get(fileName)!.push(node);
+};
+
+export const requiredPaths = new Set<string>();
+
+export const addRequiredPath = (requiredPath: string) => {
+  requiredPaths.add(requiredPath);
 };
 
 export const use = (node?: ts.Symbol | (ts.Node & {name?: any})) => {
