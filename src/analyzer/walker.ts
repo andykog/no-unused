@@ -184,13 +184,20 @@ export const walk = (node?: ts.Node) => {
 
     node.arguments.forEach((argument, i) => {
       const argumentType = checker.getTypeAtLocation(argument);
-      exprType.getCallSignatures().forEach((sig) => {
-        use(argumentType.symbol);
-        const targetPSymbol = sig.parameters[i];
-        if (!targetPSymbol) return;
-        const targetType = checker.getTypeOfSymbolAtLocation(targetPSymbol, argument);
-        linkTypes(argumentType, targetType, argument);
-      });
+      const getCallParameterTypeAndSymbol = (type: ts.Type, index: number) => {
+        const callSignatures = type.getCallSignatures();
+        const paramSymbols = callSignatures.map((sig) => sig.parameters[i]).filter(Boolean);
+        return paramSymbols.length ? paramSymbols : undefined;
+      };
+      const paramSymbols = getCallParameterTypeAndSymbol(exprType, i);
+      if (paramSymbols) {
+        paramSymbols.forEach((targetPSymbol) => {
+          const targetType = checker.getTypeOfSymbolAtLocation(targetPSymbol, argument);
+          linkTypes(argumentType, targetType, argument);
+        });
+      } else {
+        findEachSymbolInType(argumentType, argument, use);
+      }
     });
   } else if (_.isNewExpression(node)) {
     use(checker.getSymbolAtLocation(node.expression));

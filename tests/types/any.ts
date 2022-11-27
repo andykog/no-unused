@@ -11,3 +11,7 @@ console.log(data);
 s.b;
 s.c;
 x;
+
+declare const anyFunction: any;
+
+anyFunction({a: 1});
