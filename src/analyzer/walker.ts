@@ -75,6 +75,13 @@ const isExported = (node: ts.Node) => {
   const {modifiers} = node as any;
   return _.hasModifier(modifiers, ts.SyntaxKind.ExportKeyword);
 };
+
+const getCallParameterSymbols = (type: ts.Type, index: number) => {
+  const callSignatures = type.getCallSignatures();
+  const paramSymbols = callSignatures.map((sig) => sig.parameters[index]).filter(Boolean);
+  return paramSymbols.length ? paramSymbols : undefined;
+};
+
 export const walk = (node?: ts.Node) => {
   if (!node) return;
 
@@ -184,12 +191,7 @@ export const walk = (node?: ts.Node) => {
 
     node.arguments.forEach((argument, i) => {
       const argumentType = checker.getTypeAtLocation(argument);
-      const getCallParameterTypeAndSymbol = (type: ts.Type, index: number) => {
-        const callSignatures = type.getCallSignatures();
-        const paramSymbols = callSignatures.map((sig) => sig.parameters[i]).filter(Boolean);
-        return paramSymbols.length ? paramSymbols : undefined;
-      };
-      const paramSymbols = getCallParameterTypeAndSymbol(exprType, i);
+      const paramSymbols = getCallParameterSymbols(exprType, i);
       if (paramSymbols) {
         paramSymbols.forEach((targetPSymbol) => {
           const targetType = checker.getTypeOfSymbolAtLocation(targetPSymbol, argument);
