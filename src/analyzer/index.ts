@@ -4,6 +4,7 @@ import {walk} from './walker';
 import minimatch from 'minimatch';
 
 type Options = {
+  includeFilesPattern?: string;
   ignoredFilesPattern?: string;
   ignoredExportsPattern?: string;
 };
@@ -20,7 +21,11 @@ export const analyze = (program: ts.Program, options: Options = {}) => {
     .filter(
       (f) => !program.isSourceFileFromExternalLibrary(f) && !program.isSourceFileDefaultLibrary(f),
     )
-    .filter((f) => !matchesGlob(f.fileName, options.ignoredFilesPattern))
+    .filter(
+      (f) =>
+        (!options.includeFilesPattern || matchesGlob(f.fileName, options.includeFilesPattern)) &&
+        !matchesGlob(f.fileName, options.ignoredFilesPattern),
+    )
     .forEach((f) => {
       const ignoreExports = matchesGlob(f.fileName, options.ignoredExportsPattern);
       setIgnoreExports(ignoreExports);

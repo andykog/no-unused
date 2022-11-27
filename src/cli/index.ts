@@ -16,7 +16,7 @@ const command = new Command()
   .option('-e, --errors', 'emit tsc errors')
   .action(
     (
-      pattern,
+      includeFilesPattern,
       {
         ignore: ignoredFilesPattern,
         ignoreExports: ignoredExportsPattern,
@@ -53,6 +53,7 @@ const command = new Command()
       };
 
       const {seenIdentifiers, usedIdentifiers} = analyze(createProgram(), {
+        includeFilesPattern,
         ignoredFilesPattern,
         ignoredExportsPattern,
       });
