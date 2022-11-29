@@ -108,7 +108,7 @@ export const walk = (node?: ts.Node) => {
   ) {
     use(node);
     const type = checker.getTypeAtLocation(node);
-    extractIdentifiersFromType(type, node)?.forEach(use);
+    extractIdentifiersFromType(type, node)?.forEach((i) => usedIdentifiers.add(i));
     node.forEachChild(walk);
     return;
   }
