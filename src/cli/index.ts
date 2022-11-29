@@ -3,6 +3,7 @@ import * as glob from 'glob';
 import {analyze} from '../analyzer';
 import {resolveTsConfig} from './tsConfigResolver';
 import {Command} from 'commander';
+import {debugTime} from '../utils/debugTime';
 const packageJson = require('../../package.json');
 
 const command = new Command()
@@ -13,6 +14,7 @@ const command = new Command()
   .option('-i, --ignore [pattern]', 'pattern for ignored files', '**/*.@(spec|test).*')
   .option('-I, --ignoreExports [pattern]', 'pattern for files where exports are ignored')
   .option('-p, --project [string]', 'path to tsconfig.json (omit to resolve automatically)')
+  .option('-n, --number', 'output only number of unused identifiers')
   .option('-e, --errors', 'emit tsc errors')
   .action(
     (
@@ -22,7 +24,14 @@ const command = new Command()
         ignoreExports: ignoredExportsPattern,
         errors: tscErrors,
         project: pathToTsconfig,
-      }: {ignore: string; errors: boolean; project?: string; ignoreExports?: string},
+        number: onlyNumber,
+      }: {
+        ignore: string;
+        errors: boolean;
+        project?: string;
+        ignoreExports?: string;
+        number?: boolean;
+      },
     ) => {
       const tsConfig = resolveTsConfig(pathToTsconfig);
       const entrypoints =
@@ -54,6 +63,12 @@ const command = new Command()
       });
 
       const unusedIdentifiers = Array.from(seenIdentifiers).filter((i) => !usedIdentifiers.has(i));
+
+      if (onlyNumber) {
+        console.log(unusedIdentifiers.length);
+        return;
+      }
+
       let diagnostics: ts.DiagnosticWithLocation[] = unusedIdentifiers.map((identifier) => ({
         category: ts.DiagnosticCategory.Message,
         code: 0,

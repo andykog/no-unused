@@ -15,7 +15,7 @@
     "build": "rm -rf lib/* ; tsc",
     "lint": "eslint src/**/*.ts",
     "lint-tests": "eslint 'tests/@(syntax|types)/**/*.@(ts|tsx)'",
-    "test": "jest"
+    "test": "jest --roots tests"
   },
   "dependencies": {
     "commander": "^9.4.1",

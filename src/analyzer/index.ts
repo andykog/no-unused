@@ -10,6 +10,8 @@ import {
 } from './state';
 import {walk} from './walker';
 import minimatch from 'minimatch';
+import {debugTime} from '../utils/debugTime';
+import {nodeKindToString} from '../utils/nodeKindToString';
 
 type Options = {
   includeFilesPattern?: string;
@@ -39,6 +41,7 @@ export const analyze = (program: ts.Program, options: Options = {}) => {
         (!options.includeFilesPattern || matchesGlob(file.fileName, options.includeFilesPattern)) &&
         !matchesGlob(file.fileName, options.ignoredFilesPattern),
     );
+
   sourceFiles.forEach(walk);
 
   const ignoredExportsFilePaths = options.ignoredExportsPattern

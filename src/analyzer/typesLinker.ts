@@ -90,11 +90,15 @@ export const findEachSymbolInType = (
   });
 };
 
+const _extractIdentifiersFromTypeCache = new WeakMap<ts.Type, Set<ts.Identifier>>();
+
 export const extractIdentifiersFromType = (type: ts.Type, location: ts.Node) => {
+  if (_extractIdentifiersFromTypeCache.has(type)) return _extractIdentifiersFromTypeCache.get(type);
   const extracted = new Set<ts.Identifier>();
   findEachSymbolInType(type, location, (s) =>
     s?.declarations?.forEach((d: any) => d.name && extracted.add(d.name)),
   );
+  _extractIdentifiersFromTypeCache.set(type, extracted);
   return extracted;
 };
 

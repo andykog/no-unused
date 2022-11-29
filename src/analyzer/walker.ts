@@ -108,7 +108,9 @@ export const walk = (node?: ts.Node) => {
   ) {
     use(node);
     const type = checker.getTypeAtLocation(node);
-    findEachSymbolInType(type, node, use);
+    extractIdentifiersFromType(type, node)?.forEach(use);
+    node.forEachChild(walk);
+    return;
   }
 
   if (_.isObjectLiteralExpression(node)) {
