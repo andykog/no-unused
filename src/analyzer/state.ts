@@ -48,7 +48,7 @@ export const use = (node?: ts.Symbol | (ts.Node & {name?: any})) => {
   if ('escapedName' in node) {
     node.declarations?.forEach(use);
   } else if (_.isIndexSignatureDeclaration(node)) {
-    node.parameters.forEach(use)
+    node.parameters.forEach(use);
   } else if (node.name && _.isIdentifier(node.name)) {
     usedIdentifiers.add(node.name);
   }
