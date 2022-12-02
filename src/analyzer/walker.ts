@@ -35,6 +35,7 @@ const linkBindingPattern = (
   if (sourceSymbol) {
     use(sourceSymbol);
   }
+
   if (_.isObjectBindingPattern(node)) {
     node.elements.forEach((element) => {
       const identifier = element.propertyName ?? element.name;
@@ -173,8 +174,6 @@ export const walk = (node?: ts.Node) => {
         if (_.isBindingPattern(p.name) && p.type) {
           linkBindingPattern(checker.getTypeFromTypeNode(p.type), p.name);
         }
-        if (p.initializer) {
-        }
         walk(p);
       });
       walk(node.type);
@@ -208,6 +207,7 @@ export const walk = (node?: ts.Node) => {
       const paramSymbols = getCallParameterSymbols(exprType, i);
       if (paramSymbols) {
         paramSymbols.forEach((targetPSymbol) => {
+          use(targetPSymbol);
           const targetType = checker.getTypeOfSymbolAtLocation(targetPSymbol, argument);
           linkTypes(argumentType, targetType, argument);
         });

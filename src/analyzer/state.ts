@@ -45,8 +45,10 @@ export const addRequiredPath = (requiredPath: string) => {
 
 export const use = (node?: ts.Symbol | (ts.Node & {name?: any})) => {
   if (!node) return;
-  if ('declarations' in node) {
+  if ('escapedName' in node) {
     node.declarations?.forEach(use);
+  } else if (_.isIndexSignatureDeclaration(node)) {
+    node.parameters.forEach(use)
   } else if (node.name && _.isIdentifier(node.name)) {
     usedIdentifiers.add(node.name);
   }
