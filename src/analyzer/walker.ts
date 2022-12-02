@@ -173,6 +173,8 @@ export const walk = (node?: ts.Node) => {
         if (_.isBindingPattern(p.name) && p.type) {
           linkBindingPattern(checker.getTypeFromTypeNode(p.type), p.name);
         }
+        if (p.initializer) {
+        }
         walk(p);
       });
       walk(node.type);
@@ -216,7 +218,11 @@ export const walk = (node?: ts.Node) => {
   } else if (_.isNewExpression(node)) {
     use(checker.getSymbolAtLocation(node.expression));
     node.forEachChild(walk);
-  } else if (_.isVariableDeclaration(node) || _.isPropertyDeclaration(node)) {
+  } else if (
+    _.isVariableDeclaration(node) ||
+    _.isPropertyDeclaration(node) ||
+    _.isParameterDeclaration(node)
+  ) {
     see(node);
     if (node.type) {
       withWhitelistStack(
