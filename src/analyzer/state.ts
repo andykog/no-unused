@@ -21,18 +21,12 @@ export let program: ts.Program;
 
 export let checker: ts.TypeChecker;
 
-export let insideIgnoredExport = false;
-
 export const setProgram = (p: ts.Program) => {
   program = p;
 };
 
 export const setTypeChecker = (t: ts.TypeChecker) => {
   checker = t;
-};
-
-export const setInsideIgnoredExport = (value: boolean) => {
-  insideIgnoredExport = value;
 };
 
 export const exportsByFile = new Map<string, ts.Node[]>();

@@ -5,11 +5,10 @@ import {
   usedIdentifiers,
   setTypeChecker,
   setProgram,
-  setInsideIgnoredExport,
   exportsByFile,
   requiredPaths,
 } from './state';
-import {walk} from './walker';
+import {useDeep, walk} from './walker';
 import minimatch from 'minimatch';
 import {debugTime} from '../utils/debugTime';
 import {nodeKindToString} from '../utils/nodeKindToString';
@@ -55,11 +54,9 @@ export const analyze = (program: ts.Program, options: Options = {}) => {
     .filter((f) => requiredPaths.has(f.fileName.replace(/.tsx?$/, '')))
     .map((f) => f.fileName);
 
-  setInsideIgnoredExport(true);
   deduplicate([...ignoredExportsFilePaths, ...requiredFilePaths])
     .flatMap((f) => exportsByFile.get(f) ?? [])
-    .forEach(walk);
-  setInsideIgnoredExport(false);
+    .forEach(useDeep);
 
   return {seenIdentifiers, usedIdentifiers};
 };

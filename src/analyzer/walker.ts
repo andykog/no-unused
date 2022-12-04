@@ -4,19 +4,16 @@ import * as path from 'path';
 import {logDebug} from '../utils/debugLog';
 import {
   checker,
-  usedIdentifiers,
   functionsStack,
   whitelistStack,
   withFunctionsStack,
   withWhitelistStack,
   use,
   see,
-  setInsideIgnoredExport,
-  insideIgnoredExport,
   addExport,
   addRequiredPath,
 } from './state';
-import {extractIdentifiersFromType, linkTypes, findEachSymbolInType} from './typesLinker';
+import {extractIdentifiersFromType, linkTypes} from './typesLinker';
 
 const getClassType = (node: ts.ClassLikeDeclaration) => {
   const type = checker.getTypeAtLocation(node);
@@ -85,6 +82,14 @@ const getCallParameterSymbols = (type: ts.Type, index: number) => {
   return paramSymbols.length ? paramSymbols : undefined;
 };
 
+export const useDeep = (node: ts.Node) => {
+  use(node);
+  const type = checker.getTypeAtLocation(node);
+  extractIdentifiersFromType(type, node)?.forEach(use);
+  node.forEachChild(useDeep);
+  return;
+};
+
 export const walk = (node?: ts.Node) => {
   if (!node) return;
 
@@ -94,24 +99,17 @@ export const walk = (node?: ts.Node) => {
     const actualIdentifiers = extractIdentifiersFromType(checker.getTypeAtLocation(node), node);
     Array.from(actualIdentifiers ?? []).forEach((i) => {
       if (!whitelistIdentifiers.has(i)) {
-        usedIdentifiers.add(i);
+        use(i);
       }
     });
   }
 
-  if (isExported(node) && !insideIgnoredExport) {
+  if (isExported(node)) {
     addExport(node);
   }
 
-  if (
-    insideIgnoredExport ||
-    ts.getJSDocTags(node).some(({tagName}) => tagName.escapedText === 'public')
-  ) {
-    use(node);
-    const type = checker.getTypeAtLocation(node);
-    extractIdentifiersFromType(type, node)?.forEach((i) => usedIdentifiers.add(i));
-    node.forEachChild(walk);
-    return;
+  if (ts.getJSDocTags(node).some(({tagName}) => tagName.escapedText === 'public')) {
+    useDeep(node);
   }
 
   if (_.isObjectLiteralExpression(node)) {
