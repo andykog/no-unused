@@ -212,7 +212,7 @@ export const walk = (node?: ts.Node) => {
           linkTypes(argumentType, targetType, argument);
         });
       } else {
-        findEachSymbolInType(argumentType, argument, use);
+        extractIdentifiersFromType(argumentType, argument)?.forEach(use);
       }
     });
   } else if (_.isNewExpression(node)) {

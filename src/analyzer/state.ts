@@ -17,9 +17,15 @@ export const withWhitelistStack = (node: Set<ts.Identifier> | undefined, cb: () 
   whitelistStack.pop();
 };
 
+export let program: ts.Program;
+
 export let checker: ts.TypeChecker;
 
 export let insideIgnoredExport = false;
+
+export const setProgram = (p: ts.Program) => {
+  program = p;
+};
 
 export const setTypeChecker = (t: ts.TypeChecker) => {
   checker = t;
@@ -47,6 +53,8 @@ export const use = (node?: ts.Symbol | (ts.Node & {name?: any})) => {
   if (!node) return;
   if ('escapedName' in node) {
     node.declarations?.forEach(use);
+  } else if (_.isIdentifier(node)) {
+    usedIdentifiers.add(node);
   } else if (_.isIndexSignatureDeclaration(node)) {
     node.parameters.forEach(use);
   } else if (node.name && _.isIdentifier(node.name)) {

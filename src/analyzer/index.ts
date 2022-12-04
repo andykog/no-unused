@@ -4,6 +4,7 @@ import {
   seenIdentifiers,
   usedIdentifiers,
   setTypeChecker,
+  setProgram,
   setInsideIgnoredExport,
   exportsByFile,
   requiredPaths,
@@ -28,6 +29,7 @@ const deduplicate = <T>(arr: T[]) => Array.from(new Set(arr));
 
 export const analyze = (program: ts.Program, options: Options = {}) => {
   seenIdentifiers.clear();
+  setProgram(program);
   setTypeChecker(program.getTypeChecker());
 
   const sourceFiles = program

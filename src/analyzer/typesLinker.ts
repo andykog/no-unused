@@ -1,8 +1,17 @@
 import ts from 'typescript';
 import * as _ from 'tsutils';
-import {checker, use, see} from './state';
+import {program, checker, use, see} from './state';
 
-const getTypeId = (type?: ts.Type) => type?.symbol?.declarations?.[0] ?? type;
+const cache = {
+  extractIdentifiersFromType: new WeakMap<ts.Type, Set<ts.Identifier>>(),
+  linkTypes: new WeakMap<ts.Type, WeakSet<ts.Type>>(),
+};
+
+const isExternalSymbol = (s?: ts.Symbol) => {
+  const file = s?.declarations?.[0]?.getSourceFile();
+  if (!file) return;
+  return program.isSourceFileFromExternalLibrary(file) || program.isSourceFileDefaultLibrary(file);
+};
 
 const forEachConditionalBranch = (type: ts.ConditionalType, cb: (t: ts.Type) => void) => {
   // make sure truetype is resolved https://github.com/microsoft/TypeScript/issues/45537
@@ -35,7 +44,9 @@ const forEachPropertyInType = (
   location: ts.Node,
   cb: (t: ts.Type, s: ts.Symbol) => void,
 ) => {
+  if (!_.isObjectType(type)) return;
   type.getProperties().forEach((s) => {
+    if (isExternalSymbol(s)) return;
     const t = checker.getTypeOfSymbolAtLocation(s, location);
     cb(t, s);
   });
@@ -61,11 +72,11 @@ const findEachNestedType = (
   type: ts.Type,
   location: ts.Node,
   cb: (t: ts.Type, s?: ts.Symbol) => void,
-  seen = new Set<any>(),
+  seen = new Set<ts.Type>(),
 ) => {
   if (!type) return;
-  if (seen.has(getTypeId(type))) return;
-  seen.add(getTypeId(type));
+  if (seen.has(type)) return;
+  seen.add(type);
   forEachTypeConstituent(type, (type) => {
     forEachTypeArgument(type, (t) => findEachNestedType(t, location, cb, seen));
     forEachPropertyInType(type, location, (t, s) => {
@@ -90,29 +101,30 @@ export const findEachSymbolInType = (
   });
 };
 
-const _extractIdentifiersFromTypeCache = new WeakMap<ts.Type, Set<ts.Identifier>>();
+const forEachIdentifierInNode = (node: ts.Node, cb: (i: ts.Identifier) => void) => {
+  if (_.isIndexSignatureDeclaration(node)) {
+    node.parameters.forEach((p) => forEachIdentifierInNode(p, cb));
+  } else if ((node as any).name) {
+    cb((node as any).name);
+  }
+};
 
 export const extractIdentifiersFromType = (type: ts.Type, location: ts.Node) => {
-  if (_extractIdentifiersFromTypeCache.has(type)) return _extractIdentifiersFromTypeCache.get(type);
+  if (cache.extractIdentifiersFromType.has(type)) return cache.extractIdentifiersFromType.get(type);
   const extracted = new Set<ts.Identifier>();
-  findEachSymbolInType(type, location, (s) =>
-    s?.declarations?.forEach((d: any) => d.name && extracted.add(d.name)),
-  );
-  _extractIdentifiersFromTypeCache.set(type, extracted);
+  findEachSymbolInType(type, location, (s) => {
+    s?.declarations?.forEach((d) => forEachIdentifierInNode(d, (i) => extracted.add(i)));
+  });
+  cache.extractIdentifiersFromType.set(type, extracted);
   return extracted;
 };
 
-export const linkTypes = (
-  sourceType: ts.Type,
-  targetType: ts.Type,
-  location: ts.Node,
-  seen = new WeakMap<any, WeakSet<any>>(),
-) => {
+export const linkTypes = (sourceType: ts.Type, targetType: ts.Type, location: ts.Node) => {
   if (!sourceType) return;
   if (sourceType === targetType) return;
-  if (seen.get(getTypeId(sourceType))?.has(getTypeId(targetType))) return;
-  if (!seen.has(getTypeId(sourceType))) seen.set(getTypeId(sourceType), new WeakSet());
-  seen.get(getTypeId(sourceType))!.add(getTypeId(targetType));
+  if (cache.linkTypes.get(sourceType)?.has(targetType)) return;
+  if (!cache.linkTypes.has(sourceType)) cache.linkTypes.set(sourceType, new WeakSet());
+  cache.linkTypes.get(sourceType)!.add(targetType);
 
   if (targetType.flags & ts.TypeFlags.Any) {
     findEachSymbolInType(sourceType, location, use);
@@ -127,7 +139,7 @@ export const linkTypes = (
           : undefined;
         if (targetPType) {
           use(sourcePType.symbol);
-          linkTypes(sourcePType, targetPType, location, seen);
+          linkTypes(sourcePType, targetPType, location);
         }
       });
 
@@ -142,13 +154,13 @@ export const linkTypes = (
           : undefined;
         if (targetPType) {
           use(sourcePSymbol);
-          linkTypes(sourcePType, targetPType, location, seen);
+          linkTypes(sourcePType, targetPType, location);
         }
       });
 
       forEachReturnType(sourceType, (sourceReturnType) => {
         forEachReturnType(targetType, (targetReturnType) => {
-          linkTypes(sourceReturnType, targetReturnType, location, seen);
+          linkTypes(sourceReturnType, targetReturnType, location);
         });
       });
 
@@ -161,7 +173,7 @@ export const linkTypes = (
               return;
             }
             // Parameters are in contravariant position, so source & target are flipped
-            linkTypes(targetPType, sourcePType, location, seen);
+            linkTypes(targetPType, sourcePType, location);
           });
         });
       });
