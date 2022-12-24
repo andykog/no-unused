@@ -93,7 +93,7 @@ export const useDeep = (node: ts.Node) => {
 export const walk = (node?: ts.Node) => {
   if (!node) return;
 
-  const whitelistIdentifiers = whitelistStack.at(-1);
+  const whitelistIdentifiers = whitelistStack[whitelistStack.length - 1];
   if (whitelistIdentifiers) {
     const type = checker.getTypeAtLocation(node);
     const actualIdentifiers = extractIdentifiersFromType(checker.getTypeAtLocation(node), node);
@@ -155,7 +155,7 @@ export const walk = (node?: ts.Node) => {
   } else if (_.isReturnStatement(node)) {
     if (node.expression) {
       walk(node.expression);
-      handleReturn(node.expression, functionsStack.at(-1));
+      handleReturn(node.expression, functionsStack[functionsStack.length - 1]);
     }
   } else if (
     _.isSetAccessorDeclaration(node) ||
